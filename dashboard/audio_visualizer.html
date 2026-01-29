@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="az">
+
+<head>
+    <meta charset="UTF-8">
+    <title>DOOM Audio Visualizer</title>
+    <style>
+        body {
+            background: #1a1a1a;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+        }
+
+        canvas {
+            background: #000;
+            border: 2px solid #333;
+            margin-top: 20px;
+            cursor: crosshair;
+        }
+
+        .controls {
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #00ff00;
+            display: inline-block;
+        }
+
+        .legend {
+            font-size: 0.8em;
+            color: #888;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>DOOM Sound Archeology</h1>
+    <div class="legend">Ekrana klik edin: Səs mənbəyi (Qırmızı Dot). Mərkəzdəki Yaşıl Dot sizsiniz.</div>
+
+    <div class="controls">
+        Volume: <span id="vol-val">0</span> |
+        Panning: <span id="pan-val">0</span> |
+        Dist: <span id="dist-val">0</span>
+    </div>
+
+    <canvas id="viz" width="600" height="600"></canvas>
+
+    <script>
+        /**
+         * Modernized DOOM Sound Engine
+         * Ported from s_sound.c (1993) to Web Audio API
+         */
+
+        class DoomAudioEngine {
+            constructor() {
+                this.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                this.S_CLIPPING_DIST = 1200; // Original clipping distance
+                this.S_CLOSE_DIST = 160;    // Max volume distance
+                this.S_ATTENUATOR = (this.S_CLIPPING_DIST - this.S_CLOSE_DIST);
+            }
+
+            approxDistance(dx, dy) {
+                dx = Math.abs(dx);
+                dy = Math.abs(dy);
+                return (dx + dy - (Math.min(dx, dy) >> 1));
+            }
+
+            calculatePanning(angleRad, listenerAngleRad) {
+                let relativeAngle = angleRad - listenerAngleRad;
+                return Math.sin(relativeAngle);
+            }
+
+            calculateVolume(dist) {
+                if (dist < this.S_CLOSE_DIST) return 1.0;
+                if (dist > this.S_CLIPPING_DIST) return 0.0;
+                let vol = (this.S_CLIPPING_DIST - dist) / this.S_ATTENUATOR;
+                return Math.max(0, Math.min(1, vol));
+            }
+
+            playSound(sourceX, sourceY, listenerX, listenerY, listenerAngle) {
+                let dx = sourceX - listenerX;
+                let dy = sourceY - listenerY;
+                let dist = this.approxDistance(dx, dy);
+                let vol = this.calculateVolume(dist);
+                let angleToSource = Math.atan2(dy, dx);
+                let pan = this.calculatePanning(angleToSource, listenerAngle);
+
+                const oscillator = this.audioCtx.createOscillator();
+                const gainNode = this.audioCtx.createGain();
+                const panner = this.audioCtx.createStereoPanner();
+
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(220, this.audioCtx.currentTime);
+                gainNode.gain.setValueAtTime(vol * 0.2, this.audioCtx.currentTime);
+                panner.pan.setValueAtTime(pan, this.audioCtx.currentTime);
+
+                oscillator.connect(panner).connect(gainNode).connect(this.audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(this.audioCtx.currentTime + 0.1);
+            }
+        }
+
+        const canvas = document.getElementById('viz');
+        const ctx = canvas.getContext('2d');
+        const engine = new DoomAudioEngine();
+
+        const listener = { x: 300, y: 300, angle: -Math.PI / 2 }; // Center
+        let source = { x: 400, y: 300 };
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Clipping Dist Circle
+            ctx.beginPath();
+            ctx.strokeStyle = '#333';
+            ctx.arc(listener.x, listener.y, 1200 / 4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Close Dist Circle
+            ctx.beginPath();
+            ctx.strokeStyle = '#444';
+            ctx.arc(listener.x, listener.y, 160 / 4, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw Listener
+            ctx.fillStyle = '#00ff00';
+            ctx.beginPath();
+            ctx.arc(listener.x, listener.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Draw Source
+            ctx.fillStyle = '#ff0000';
+            ctx.beginPath();
+            ctx.arc(source.x, source.y, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Logic for GUI
+            const dx = (source.x - listener.x) * 4; // Scaling back up for math
+            const dy = (source.y - listener.y) * 4;
+            const dist = engine.approxDistance(dx, dy);
+            const vol = engine.calculateVolume(dist);
+            const angle = Math.atan2(dy, dx);
+            const pan = engine.calculatePanning(angle, listener.angle);
+
+            document.getElementById('vol-val').innerText = vol.toFixed(2);
+            document.getElementById('pan-val').innerText = pan.toFixed(2);
+            document.getElementById('dist-val').innerText = Math.round(dist);
+
+            requestAnimationFrame(draw);
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            source.x = e.clientX - rect.left;
+            source.y = e.clientY - rect.top;
+
+            const dx = (source.x - listener.x) * 4;
+            const dy = (source.y - listener.y) * 4;
+            engine.playSound(dx, dy, 0, 0, listener.angle); // Relative play
+        });
+
+        draw();
+    </script>
+</body>
+
+</html>

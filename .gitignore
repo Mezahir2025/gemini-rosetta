@@ -1,0 +1,6 @@
+.env
+secrets.py
+__pycache__/
+*.pyc
+*.log
+.gemini/
