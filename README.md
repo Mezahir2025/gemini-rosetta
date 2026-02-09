@@ -45,7 +45,7 @@ This repository is fully containerized and ready for immediate deployment.
 ### Quick Start
 ```bash
 # Clone the repository
-git clone https://github.com/MezahirAliyev-ai/gemini-rosetta.git
+git clone https://github.com/Mezahir2025/gemini-rosetta
 
 # Install dependencies
 pip install -r requirements.txt
