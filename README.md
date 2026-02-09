@@ -1,6 +1,7 @@
 # Gemini Rosetta // Masterpiece Edition
 > **Autonomous Legacy Code Modernization Platform**  
 > *Powered by Gemini 3 1M Context Engine & Google DeepMind*
+> 
 > *Built and validated within the Antigravity environment, utilizing Gemini 3's native orchestration capabilities.*
 
 ![Gemini Rosetta Badge](https://img.shields.io/badge/Status-Enterprise_Grade-00ff41?style=for-the-badge)
