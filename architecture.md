@@ -38,7 +38,7 @@ graph TD
     end
 ```
 
-Technical Foundation
+## Technical Foundation
 This system is built and validated within the Antigravity environment, utilizing Gemini 3's native orchestration capabilities to bridge the gap between 1996 and 2026.
 
 ## Legend
