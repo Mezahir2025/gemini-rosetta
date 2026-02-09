@@ -1,0 +1,7 @@
+google-generativeai>=0.3.0
+streamlit>=1.25.0
+gTTS>=2.3.0
+python-dotenv>=1.0.0
+# Physics and Data handling
+numpy>=1.24.0
+decimal
